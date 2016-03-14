@@ -29,6 +29,7 @@ For
 - more information on how to use uicForm3,
 - a complete documentation and
 - some examples,
+
 please visit the [project's homepage](http://uic.megaflop.net).
 
 ## Compatibility
