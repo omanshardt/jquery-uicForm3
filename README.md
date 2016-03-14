@@ -25,7 +25,11 @@ $('#myFrom').uicForm3();
 
 - Use the plugin's [methods](http://uic.megaflop.net/documentation) to control your form (populate data into it, get data out of it, reset, wipe and clear the form) and define methods for the [callbacks](http://uic.megaflop.net/documentation) within the plugin's options to make your code react dynamically on any changes of the form's data.
 
-For more information on how to use uicForm3, a complete documentation and some examples, please visit the [project's homepage](http://uic.megaflop.net).
+For
+- more information on how to use uicForm3,
+- a complete documentation and
+- some examples,
+please visit the [project's homepage](http://uic.megaflop.net).
 
 ## Compatibility
 Tested on Firefox, Safari, Chrome, Safari Mobile, iCab Mobile, Internet Explorer 7
