@@ -1,9 +1,10 @@
 # uicForm3
 
 The plugin’s key feature are:
-- Populating javascript data to the form by providing flat or nested objects.
-- Retrieving data from the form and creating flat or nested objects according to the form element’s naming.
-- Working on a property base rather than on a form field base.
+- Mapping html form data to javascript object data abd vice versa
+-- Populating javascript data to the form by providing flat or nested objects.
+-- Retrieving data from the form and creating flat or nested objects according to the form element’s naming.
+-- Working on a property base rather than on a form field base.
 - Differentiating between initial and current data.
 - Triggering several callbacks whenever form data do change.
 - Leaving the DOM untouched.
