@@ -1,0 +1,23 @@
+/build/examples
+/build/index.php
+/build/res
+/build/sourceCode/BackUps
+/build/sourceCode/history
+/build/sourceCode/Neuer Ordner
+/build/versionHistory
+/build/versionHistory.txt
+
+/dev
+
+/node_modules
+
+/src/examples
+/src/index.php
+/src/res
+/src/sourceCode/BackUps
+/src/sourceCode/history
+/src/sourceCode/Neuer Ordner
+/src/versionHistory
+/src/versionHistory.txt
+
+/uicForm Compatibility.ods
