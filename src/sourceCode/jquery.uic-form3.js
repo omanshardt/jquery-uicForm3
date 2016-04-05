@@ -1,6 +1,6 @@
-// Version 1.0.7 13.11.2015
-// this version is about to pass custom parameters through the whole chain up to the uicForm3 events when events are triggered
+// Version 1.0.4 22.02.2015
 (function($, window, undefined){
+	// public methods START
 	var identifier = "uic_form3";
 	var _const = {
 		log: {
@@ -15,8 +15,6 @@
 			NUMOFARGS: 'Number of arguments is out of range.'
 		}
 	}
-
-	// public methods START
 	var methods = {
 		populate: function(dataObj, isInitialValue) {
 			try {
@@ -169,7 +167,6 @@
 						return getValue.call(formElm, true, arguments);
 						break;
 					case 2:
-					case 3:
 						setValue.call(formElm, true, arguments);
 						return $formElm;
 						break;
@@ -190,7 +187,6 @@
 						return getValue.call(formElm, false, arguments);
 						break;
 					case 2:
-					case 3:
 						setValue.call(formElm, false, arguments);
 						return $formElm;
 						break;
@@ -437,8 +433,7 @@
 				onFormValidStateChange: function() {},
 				onResetFields: function() {},
 				onClear: function() {},
-				onWipe: function() {},
-				dataTransformer: {}
+				onWipe: function() {}
 			}
 			var settings = $.extend(true, {}, internalDefaults, $.fn.uicForm3.defaults, options);
 			return this.each(function(){
@@ -500,8 +495,7 @@
 					updateProperties.call(formElm);
 					storage.initiated = true;
 					storage.formModified = methods.formModified.call($formElm);
-					storage.callEventListeners.call(formElm, 'onFormInit', storage.properties, storage.formModified);
-// 					console.dir(storage.properties);
+					storage.callEventListeners.call(formElm, 'onFormInit', storage.formModified);
 				}
 			});
 		}
@@ -540,15 +534,13 @@
 		var storage = $formElm.data(identifier).storage;
 		$formElm.on('submit', function(e){
 			e.preventDefault();
-// 			storage.callEventListeners.call(formElm, 'onFormSubmit', $formElm.serialize(), methods.data.call($formElm), methods.modifiedData.call($formElm), e || null);
-			storage.callEventListeners.call(formElm, ['onFormSubmit', $formElm.serialize(), methods.data.call($formElm), methods.modifiedData.call($formElm), e || null].concat(Array.prototype.slice.call(arguments,0)));
+			storage.callEventListeners.call(formElm, 'onFormSubmit', $formElm.serialize(), methods.data.call($formElm), methods.modifiedData.call($formElm), e || null);
 		});
 		$formElm.on('change', 'input[type="radio"], input[type="checkbox"], select', function(e){
-// 			if (e.currentTarget.name && e.currentTarget.name != '') handleValueChanges.call(formElm, storage.properties[e.currentTarget.name], e);
-			if (e.currentTarget.name && e.currentTarget.name != '') handleValueChanges.apply(formElm, [storage.properties[e.currentTarget.name]].concat(Array.prototype.slice.call(arguments,0)));
+			handleValueChanges.call(formElm, storage.properties[e.currentTarget.name], e, false);
 		});
 		$formElm.on('change input keyup', 'input[type!="radio"][type!="checkbox"], textarea', function(e){
-			if (e.currentTarget.name && e.currentTarget.name != '') handleValueChanges.call(formElm, [storage.properties[e.currentTarget.name]].concat(Array.prototype.slice.call(arguments,0)));
+			handleValueChanges.call(formElm, storage.properties[e.currentTarget.name], e, false);
 		});
 // 		$formElm.on('keypress keydown', 'input[type!="radio"][type!="checkbox"], textarea', function(e){
 // 			console.log(e)
@@ -574,9 +566,7 @@
 			// log('debug', 'subTree removed', e);
 		});
 	}
-	function handleValueChanges(prop, e, suppressEvents) {
-		console.log('ccc', arguments, suppressEvents)
-		console.log('ddd', suppressEvents)
+	function handleValueChanges(prop, e, initialValue) {
 		var formElm = this;
 		var $formElm = $(formElm);
 		var settings = $formElm.data(identifier).settings;
@@ -584,15 +574,14 @@
 
 		var initVal = methods.initVal.call($formElm, prop.name);
 		var val = methods.val.call($formElm, prop.name);
-		suppressEvents = suppressEvents || false;
 
  		// this triggers whenever a property changed START
  		if (!isEqual(initVal, prop.tempInitVal)) {
-			if (suppressEvents == false) storage.callEventListeners.call(formElm, 'onPropertyInitValChange', prop.elements, prop.name, prop.tempInitVal, initVal, e || null);
+			storage.callEventListeners.call(formElm, 'onPropertyInitValChange', prop.elements, prop.name, prop.tempInitVal, initVal, e || null);
 			prop.tempInitVal = initVal;
 		}
 		if (!isEqual(val, prop.tempVal)) {
-			if (suppressEvents == false) storage.callEventListeners.call(formElm, 'onPropertyValChange', prop.elements, prop.name, prop.tempVal, val, e || null);
+			storage.callEventListeners.call(formElm, 'onPropertyValChange', prop.elements, prop.name, prop.tempVal, val, e || null);
 			prop.tempVal = val;
 		}
  		// this triggers whenever a property changed END
@@ -616,7 +605,18 @@
 		// this triggers only when changed state of the form changed END
 
  		// this triggers only when valid state of a property changed START
-		var currentValidState = !((toClass.call(prop.tempValObj) == '[object Object]' && prop.tempValObj !== null) && typeof prop.tempValObj.valid !== 'undefined' && prop.tempValObj.valid == false);
+		var currentValidState = true;
+		if (toClass.call(prop.tempValObj) == '[object Object]' && prop.tempValObj !== null && typeof prop.tempValObj.valid === 'boolean') {
+			currentValidState = prop.tempValObj.valid;
+		}
+		else {
+			if (initialValue) {
+				currentValidState = true;
+			}
+			else {
+				currentValidState = prop.tempValid;
+			}
+		}
 		if (currentValidState != prop.tempValid) {
 			storage.callEventListeners.call(formElm, 'onPropertyValidStateChange', prop.elements, prop.name, currentValidState, prop.tempValObj || null);
 			prop.tempValid = currentValidState;
@@ -650,8 +650,6 @@
 		var $fixedElements = $(settings.fixedElements.join(','));
 
 		// add Properties to storage.properties START
-
-		storage.properties = [];
 		$elms.each(function(){
 			if (this.name && this.name != '') {
 				if (!storage.properties[this.name]) {
@@ -698,14 +696,6 @@
 			else {
 				delete storage.properties[property];
 			}
-			
-			if (settings.dataTransformer[prop.name]) {
-				prop.format = (typeof settings.dataTransformer[prop.name].format == 'function') ? settings.dataTransformer[prop.name].format : function(val) { return val};
-				prop.unFormat = (typeof settings.dataTransformer[prop.name].unFormat == 'function') ? settings.dataTransformer[prop.name].unFormat : function(val) { return val};
-// 				if (typeof settings.dataTransformer[prop.name].format == 'function' || typeof settings.dataTransformer[prop.name].unFormat == 'function') {
-// 					prop.$others.attr('type', 'text');
-// 				}
-			}
 		}
 // 		if (storage.initiated) storage.callEventListeners.call(formElm, 'onResetFields', storage.properties);
 	}
@@ -723,7 +713,6 @@
 			var args = []; $.extend(true, args, obj);
 			var key = args[0];
 			var value = args[1];
-			var suppressEvents = (args[2]) ? args[2] : false;
 			var val = null;
 
 			var prop = storage.properties[key];
@@ -819,9 +808,8 @@
 					this.style.visibility = tempStyle;
 				});
 				prop.$others.not(prop.fixedElements).each(function(){
-					var transformedTempVal = (prop.format) ? prop.format.call(prop, tempVal) : tempVal;
-					if (initialValue) this['defaultValue'] = transformedTempVal;
-					if (initialValue || !(this.readOnly || this.disabled)) this['value'] = transformedTempVal;
+					if (initialValue) this['defaultValue'] = tempVal;
+					if (initialValue || !(this.readOnly || this.disabled)) this['value'] = tempVal;
 					assigned = true;
 				});
 				
@@ -829,9 +817,7 @@
 			}
 			else if (prop.expectedValType == 'complex'){
 				var tempVal = val.slice(0); // tempVal will hold all remaining array values after assigning these values, best case would be an empty array after assignment
-				var transformedTempVal = val.slice(0); // tempVal will hold all remaining array values after assigning these values, best case would be an empty array after assignment
 				for (var i in tempVal) {tempVal[i] = tempVal[i].toString()} // convert the contents of tempVal-Array to string to be able to compare with values from DOM-Objects
-				for (var i in transformedTempVal) {tempVal[i] = (prop.format) ? prop.format.call(prop, tempVal[i].toString()) : tempVal[i].toString()} // convert the contents of tempVal-Array to string to be able to compare with values from DOM-Objects
 				var assignedValues = [];
 				var assigned = false;
 				var radioAssigned = 0;
@@ -918,8 +904,8 @@
 
 				prop.$others.not(prop.fixedElements).each(function(idx){
 					if (tempVal.length > 0) {
-						if (initialValue) this['defaultValue'] = transformedTempVal[0];
-						if (initialValue || !(this.readOnly || this.disabled)) this['value'] = transformedTempVal[0];
+						if (initialValue) this['defaultValue'] = tempVal[0];
+						if (initialValue || !(this.readOnly || this.disabled)) this['value'] = tempVal[0];
 						assignedValues = assignedValues.concat(tempVal.splice(0, 1));
 						assigned = true;
 					}
@@ -934,7 +920,7 @@
 
 				if (val.length == 0) assigned = true;
 			}
-			handleValueChanges.call(formElm, prop, null, suppressEvents);
+			handleValueChanges.call(formElm, prop, null, initialValue);
 			if (assigned == false) throw ReferenceError('Value (' + val + ') for  property "' + key +'" could not be assigned.');
 		}
 		catch(e) { log('error', e.name + " : " + e.message) }
@@ -995,8 +981,7 @@
 				}
 			});
 			prop.$others.each(function(){
-				var val = (prop.unFormat) ? prop.unFormat.call(this, this[_val]) : this[_val];
-				if (!this.disabled && this[_val] != '') { vArr.push(convertType(val)); }
+				if (!this.disabled && this[_val] != '') { vArr.push(convertType(this[_val])); }
 			});
 
 			var retVal = null;
@@ -1106,4 +1091,3 @@
 $.fn.uicForm3.defaults = {};
 $.fn.uicForm3.log = [];
 $.fn.uicForm3.debugFilter = [];
-
