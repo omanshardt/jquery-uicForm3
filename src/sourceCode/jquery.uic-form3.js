@@ -1,4 +1,5 @@
-// Version 1.0.4 22.02.2015
+// Version 1.0.5 04.01.2017
+// replaced size() with length to establish compatibility with jquery 3.x
 (function($, window, undefined){
 	// public methods START
 	var identifier = "uic_form3";
@@ -679,7 +680,7 @@
 				prop.$selectMultiples = prop.$elms.filter(function(){return this.type.toLowerCase() == 'select-multiple'});
 				prop.$others = prop.$elms.not(prop.$radioButtons).not(prop.$checkBoxes).not(prop.$selectOnes).not(prop.$selectMultiples);
 				prop.length = prop.elements.length;
-				prop.expectedValType = (((prop.length == 1 && prop.$selectMultiples.size() == 0 ) || prop.length == prop.$radioButtons.size()) && prop.name.lastIndexOf('[]') == -1) ? 'primitive' : 'complex';
+				prop.expectedValType = (((prop.length == 1 && prop.$selectMultiples.length == 0 ) || prop.length == prop.$radioButtons.length) && prop.name.lastIndexOf('[]') == -1) ? 'primitive' : 'complex';
 				var initVal = methods.initVal.call($formElm, prop.name);
 				var val = methods.val.call($formElm, prop.name);
 				if (isEqual(initVal, val)) {
@@ -868,7 +869,7 @@
 						if (idx > -1) optionAssigned++;
 					});
 
-					if ($(this).find('option').size() > 0 && optionAssigned == 0) {
+					if ($(this).find('option').length > 0 && optionAssigned == 0) {
 						$(this).find('option').each(function(idx){
 							if (initialValue) this['defaultSelected'] = (idx == 0) ? true : false; // this sets the first radiobox = checked, if no radio box would be checked because this is the default behavior as recommended by the w3c
 							if (initialValue || !(this.readOnly || this.disabled)) this['selected'] = (idx == 0) ? true : false; // this sets the first radiobox = checked, if no radio box would be checked because this is the default behavior as recommended by the w3c

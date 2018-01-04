@@ -72,11 +72,10 @@ module.exports = function(grunt) {
     },
     uglify: {
       build: {
-        options: {
-			options : {
-				banner : '/*!\n\t <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> - <%= pkg.author %>' + '\n\t requires: jQuery\n*/\n'
-			},
-        },
+		options : {
+			//banner : '/*!\n\t <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> - <%= pkg.author %>' + '\n\t requires: jQuery\n*/\n'
+			banner : '/**\r * <%= pkg.name %> <%= pkg.version %>\r * Release date: <%= grunt.template.today("yyyy-mm-dd") %>\r */ '
+		},
         cwd: 'src',
         src: [ 'sourceCode/**/*.js' ],
         dest: 'build',

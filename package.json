@@ -1,6 +1,6 @@
 {
   "name": "jquery.uicform3",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "uicForm3 is a jQuery plugin, that manages data input and output between html forms and javascript, triggers several events on data modification and validation and allows to reset, wipe and clear the form. uicform3 is compatible with any kind of form structure because it does not modify the form's dom in any way.",
   "repository": {
     "type": "git",
@@ -29,11 +29,12 @@
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-autoprefixer": "^1.0.1",
+    "grunt-closure-tools": "^1.0.0",
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-copy": "^0.7.0",
     "grunt-contrib-cssmin": "^0.10.0",
     "grunt-contrib-jshint": "^0.10.0",
-    "grunt-contrib-uglify": "^0.6.0",
+    "grunt-contrib-uglify": "^3.3.0",
     "grunt-include-replace": "^2.0.0"
   }
 }
