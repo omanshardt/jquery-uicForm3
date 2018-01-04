@@ -1,7 +1,9 @@
-// Version 1.0.5 04.01.2017
-// replaced size() with length to establish compatibility with jquery 3.x
-(function($, window, undefined){
-	// public methods START
+// Version 1.10.0 06.01.2018
+// This is the successor of Version 1.0.5
+// It incorporates most developments that was made since 22.02.2015 within various copies and versions from 1.0.5 to 1.9.2
+// added hasOwnProperty query in many places
+
+(function($, window, undefined) {
 	var identifier = "uic_form3";
 	var _const = {
 		log: {
@@ -16,6 +18,8 @@
 			NUMOFARGS: 'Number of arguments is out of range.'
 		}
 	}
+
+	// public methods START
 	var methods = {
 		populate: function(dataObj, isInitialValue) {
 			try {
@@ -36,21 +40,24 @@
 					}
 				}
 
-// 				if (((isInitialValue) ? storage.callEventListeners.call(formElm, 'onInitDataUnload', methods.initData.call($formElm), methods.formModified.call($formElm)) : storage.callEventListeners.call(formElm, 'onDataUnload', methods.data.call($formElm), methods.formModified.call($formElm))) === false) {
-// 					return false;
-// 				}
+//				if (((isInitialValue) ? storage.callEventListeners.call(formElm, 'onInitDataUnload', methods.initData.call($formElm), methods.formModified.call($formElm)) : storage.callEventListeners.call(formElm, 'onDataUnload', methods.data.call($formElm), methods.formModified.call($formElm))) === false) {
+//					return false;
+//				}
+
 				for (var obj in storage.properties) {
-					var prop = storage.properties[obj];
-					try {
-						var val = getDataValue.call(formElm, dataObj, prop.name);
-						if (typeof val == 'undefined' || val == null) {
-							if (isInitialValue) methods.initVal.call($formElm, prop.name, (prop.expectedValType == 'primitive') ? '' : []);
-							throw new ReferenceError('The data model for the form does not provide a value for the property with name \"' + prop.name + "\"");
+					if (storage.properties.hasOwnProperty(obj)) {
+						var prop = storage.properties[obj];
+						try {
+							var val = getDataValue.call(formElm, dataObj, prop.name);
+							if (typeof val == 'undefined' || val == null) {
+								if (isInitialValue) methods.initVal.call($formElm, prop.name, (prop.expectedValType == 'primitive') ? '' : []);
+								throw new ReferenceError('The data model for the form does not provide a value for the property with name \"' + prop.name + "\"");
+							}
+							(isInitialValue) ? methods.initVal.call($formElm, prop.name, val) : methods.val.call($formElm, prop.name, val);
 						}
-						(isInitialValue) ? methods.initVal.call($formElm, prop.name, val) : methods.val.call($formElm, prop.name, val);
-					}
-					catch(e) {
-						log('error', e.name + ": " + e.message);
+						catch(e) {
+							log('error', e.name + ": " + e.message);
+						}
 					}
 				}
 				(isInitialValue) ? storage.callEventListeners.call(formElm, 'onInitDataLoad', methods.initData.call($formElm), methods.formModified.call($formElm)) : storage.callEventListeners.call(formElm, 'onDataLoad', methods.data.call($formElm), methods.formModified.call($formElm));
@@ -88,9 +95,11 @@
 					case 0:
 						var dataObj = {}
 						for (var i in storage.properties) {
-							// don't include property into return object when all assigned elements are disabled
-							var enabledElements = storage.properties[i].$elms.filter(function(elm){ return !elm.disabled});
-							if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, methods.initVal.call($formElm, storage.properties[i].name));
+							if (storage.properties.hasOwnProperty(i)) {
+								// don't include property into return object when all assigned elements are disabled
+								var enabledElements = storage.properties[i].$elms.filter(function(elm) { return !elm.disabled });
+								if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, methods.initVal.call($formElm, storage.properties[i].name));
+							}
 						}
 						return dataObj;
 						break;
@@ -115,9 +124,11 @@
 					case 0:
 						var dataObj = {}
 						for (var i in storage.properties) {
-							// don't include property into return object when all assigned elements are disabled
-							var enabledElements = storage.properties[i].$elms.filter(function(elm){ return !elm.disabled})
-							if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, methods.val.call($formElm, storage.properties[i].name));
+							if (storage.properties.hasOwnProperty(i)) {
+								// don't include property into return object when all assigned elements are disabled
+								var enabledElements = storage.properties[i].$elms.filter(function(elm) { return !elm.disabled })
+								if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, methods.val.call($formElm, storage.properties[i].name));
+							}
 						}
 						return dataObj;
 						break;
@@ -142,11 +153,13 @@
 					case 0:
 						var dataObj = {}
 						for (var i in storage.properties) {
-							var enabledElements = storage.properties[i].$elms.filter(function(elm){ return !elm.disabled})
-							var val = methods.val.call($formElm, storage.properties[i].name);
-							var initVal = methods.initVal.call($formElm, storage.properties[i].name);
-							if (!isEqual(initVal, val)) {
-								if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, val);
+							if (storage.properties.hasOwnProperty(i)) {
+								var enabledElements = storage.properties[i].$elms.filter(function(elm) { return !elm.disabled })
+								var val = methods.val.call($formElm, storage.properties[i].name);
+								var initVal = methods.initVal.call($formElm, storage.properties[i].name);
+								if (!isEqual(initVal, val)) {
+									if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, val);
+								}
 							}
 						}
 						return dataObj;
@@ -168,6 +181,7 @@
 						return getValue.call(formElm, true, arguments);
 						break;
 					case 2:
+					case 3:
 						setValue.call(formElm, true, arguments);
 						return $formElm;
 						break;
@@ -188,6 +202,7 @@
 						return getValue.call(formElm, false, arguments);
 						break;
 					case 2:
+					case 3:
 						setValue.call(formElm, false, arguments);
 						return $formElm;
 						break;
@@ -242,9 +257,11 @@
 				var storage = $formElm.data(identifier).storage;
 				var dataObj = {};
 				for (var i in storage.properties) {
-					// don't include property into return object when all assigned elements are disabled
-					var enabledElements = storage.properties[i].$elms.filter(function(elm){ return !elm.disabled})
-					if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, (storage.properties[i].expectedValType == 'primitive') ? '' : []);
+					if (storage.properties.hasOwnProperty(i)) {
+						// don't include property into return object when all assigned elements are disabled
+						var enabledElements = storage.properties[i].$elms.filter(function(elm) { return !elm.disabled })
+						if (enabledElements.length > 0) setDataValue.call(formElm, dataObj, storage.properties[i].name, (storage.properties[i].expectedValType == 'primitive') ? '' : []);
+					}
 				}
 				methods.populate.call(this, dataObj, true);
 				storage.callEventListeners.call(formElm, 'onClear');
@@ -264,30 +281,32 @@
 				var storage = $formElm.data(identifier).storage;
 				var dataObj = {};
 				for (var i in storage.properties) {
-					// don't include property into return object when all assigned elements are disabled
-					var prop = storage.properties[i];
-					var enabledElements = prop.$elms.filter(function(elm){ return !elm.disabled})
-					if (enabledElements.length > 0) {
-						var val = null;
-						if (prop.expectedValType == 'primitive') {
-							if (toClass.call(prop.tempValObj) == '[object Object]' && prop.tempValObj !== null) {
-								prop.tempValObj.value = '';
-								val = prop.tempValObj;
+					if (storage.properties.hasOwnProperty(i)) {
+						// don't include property into return object when all assigned elements are disabled
+						var prop = storage.properties[i];
+						var enabledElements = prop.$elms.filter(function(elm) { return !elm.disabled })
+						if (enabledElements.length > 0) {
+							var val = null;
+							if (prop.expectedValType == 'primitive') {
+								if (toClass.call(prop.tempValObj) == '[object Object]' && prop.tempValObj !== null) {
+									prop.tempValObj.value = '';
+									val = prop.tempValObj;
+								}
+								else {
+									val = '';
+								}
 							}
 							else {
-								val = '';
+								if (prop.tempValObj !== null) {
+									prop.tempValObj.value = [];
+									val = prop.tempValObj;
+								}
+								else {
+									val = [];
+								}
 							}
+							setDataValue.call(formElm, dataObj, prop.name, val);
 						}
-						else {
-							if (prop.tempValObj !== null) {
-								prop.tempValObj.value = [];
-								val = prop.tempValObj;
-							}
-							else {
-								val = [];
-							}
-						}
-						setDataValue.call(formElm, dataObj, prop.name, val);
 					}
 				}
 				methods.populate.call(this, dataObj, false);
@@ -365,7 +384,9 @@
 				var storage = $formElm.data(identifier).storage;
 
 				for (var prop in storage.properties) {
-					if (storage.properties[prop].modified) return true;
+					if (storage.properties.hasOwnProperty(prop)) {
+						if (storage.properties[prop].modified) return true;
+					}
 				}
 				return false;
 			}
@@ -383,7 +404,9 @@
 				var storage = $formElm.data(identifier).storage;
 
 				for (var prop in storage.properties) {
-					if (storage.properties[prop].tempValid === false) return false;
+					if (storage.properties.hasOwnProperty(prop)) {
+						if (storage.properties[prop].tempValid === false) return false;
+					}
 				}
 				return true;
 			}
@@ -417,6 +440,7 @@
 		init: function(options) {
 			// separating the internal settings-file makes it accessable after merging the final settings
 			// this is used for getting a list of event methods that is needed to create an listener-object in storage where for every event a listener array is created
+			options = options || {};
 			var internalDefaults = {
 				ignoredElements: ['fieldset', 'button', 'input[type="button"]', 'input[type="image"]', 'input[type="reset"]', 'input[type="submit"]'],
 				fixedElements: [],
@@ -434,12 +458,14 @@
 				onFormValidStateChange: function() {},
 				onResetFields: function() {},
 				onClear: function() {},
-				onWipe: function() {}
+				onWipe: function() {},
+				dataTransformer: {}
 			}
 			var settings = $.extend(true, {}, internalDefaults, $.fn.uicForm3.defaults, options);
-			return this.each(function(){
+			return this.each(function() {
 				var formElm = this;
 				var $formElm = $(formElm);
+				$formElm.addClass('uicForm');
 				var data = $formElm.data(identifier);
 				if (!data) {
 					$formElm.data(identifier,{});
@@ -496,7 +522,7 @@
 					updateProperties.call(formElm);
 					storage.initiated = true;
 					storage.formModified = methods.formModified.call($formElm);
-					storage.callEventListeners.call(formElm, 'onFormInit', storage.formModified);
+					storage.callEventListeners.call(formElm, 'onFormInit', storage.properties, storage.formModified);
 				}
 			});
 		}
@@ -524,7 +550,7 @@
 		var $elms = $(formElmArr).not(ignoredElements);
 
 		// this makes sure that if no option is implicitly selected the first one is defaultselected as it is also selected by default
-		$elms.filter(function(){ return this.type.toLowerCase() == 'select-one'}).each(function(){
+		$elms.filter(function() { return this.type.toLowerCase() == 'select-one' }).each(function() {
 			if (this.selectedIndex != -1) { this.options[this.selectedIndex].defaultSelected = true; };
 		});
 	}
@@ -533,32 +559,32 @@
 		var $formElm = $(formElm);
 		var settings = $formElm.data(identifier).settings;
 		var storage = $formElm.data(identifier).storage;
-		$formElm.on('submit', function(e){
+		$formElm.on('submit', function(e) {
 			e.preventDefault();
 			storage.callEventListeners.call(formElm, 'onFormSubmit', $formElm.serialize(), methods.data.call($formElm), methods.modifiedData.call($formElm), e || null);
 		});
-		$formElm.on('change', 'input[type="radio"], input[type="checkbox"], select', function(e){
-			handleValueChanges.call(formElm, storage.properties[e.currentTarget.name], e, false);
+		$formElm.on('change', 'input[type="radio"], input[type="checkbox"], select', function(e) {
+			if (e.currentTarget.name && e.currentTarget.name != '') handleValueChanges.call(formElm, storage.properties[e.currentTarget.name], e, false);
 		});
-		$formElm.on('change input keyup', 'input[type!="radio"][type!="checkbox"], textarea', function(e){
-			handleValueChanges.call(formElm, storage.properties[e.currentTarget.name], e, false);
+		$formElm.on('change input keyup', 'input[type!="radio"][type!="checkbox"], textarea', function(e) {
+			if (e.currentTarget.name && e.currentTarget.name != '') handleValueChanges.call(formElm, storage.properties[e.currentTarget.name], e, false);
 		});
-// 		$formElm.on('keypress keydown', 'input[type!="radio"][type!="checkbox"], textarea', function(e){
-// 			console.log(e)
-// 			doKeyDown.call(formElm, storage.properties[e.currentTarget.name], e);
-// 			if (e.type == 'keydown' && e.which == 8) {
-// 					
-// 				doKeyDown.call(formElm, storage.properties[e.currentTarget.name], e);
-// 			}
-// 		});
+//		$formElm.on('keypress keydown', 'input[type!="radio"][type!="checkbox"], textarea', function(e) {
+//			console.log(e)
+//			doKeyDown.call(formElm, storage.properties[e.currentTarget.name], e);
+//			if (e.type == 'keydown' && e.which == 8) {
+//
+//				doKeyDown.call(formElm, storage.properties[e.currentTarget.name], e);
+//			}
+//		});
 		$formElm.on('DOMSubtreeModified propertychange', function(e) {
 			// DOMSubtreeModified for w3c compliant browsers
 			// propertychange for ie < 9
-	 		// seems to be buggy in some engines
-	 		// webkit:
-	 			// when changing initialValues programatically fires on every changed option, textarea, input[type=radio], input[type=checkbox]
-	 			// when changing values programatically fires 25 x on input[type=date]
-	 		// methods.update.call($formElm);
+			// seems to be buggy in some engines
+			// webkit:
+				// when changing initialValues programatically fires on every changed option, textarea, input[type=radio], input[type=checkbox]
+				// when changing values programatically fires 25 x on input[type=date]
+			// methods.update.call($formElm);
 		});
 		$formElm.on('DOMNodeInserted', function(e) {
 			// log('debug', 'subTree inserted', e);
@@ -567,75 +593,79 @@
 			// log('debug', 'subTree removed', e);
 		});
 	}
-	function handleValueChanges(prop, e, initialValue) {
-		var formElm = this;
-		var $formElm = $(formElm);
-		var settings = $formElm.data(identifier).settings;
-		var storage = $formElm.data(identifier).storage;
+	function handleValueChanges(prop, e, suppressEvents) {
+		if (prop) {
+			var formElm = this;
+			var $formElm = $(formElm);
+			var settings = $formElm.data(identifier).settings;
+			var storage = $formElm.data(identifier).storage;
 
-		var initVal = methods.initVal.call($formElm, prop.name);
-		var val = methods.val.call($formElm, prop.name);
+			var initVal = methods.initVal.call($formElm, prop.name);
+			var val = methods.val.call($formElm, prop.name);
+			suppressEvents = suppressEvents || false;
 
- 		// this triggers whenever a property changed START
- 		if (!isEqual(initVal, prop.tempInitVal)) {
-			storage.callEventListeners.call(formElm, 'onPropertyInitValChange', prop.elements, prop.name, prop.tempInitVal, initVal, e || null);
-			prop.tempInitVal = initVal;
-		}
-		if (!isEqual(val, prop.tempVal)) {
-			storage.callEventListeners.call(formElm, 'onPropertyValChange', prop.elements, prop.name, prop.tempVal, val, e || null);
-			prop.tempVal = val;
-		}
- 		// this triggers whenever a property changed END
+			// this triggers whenever a property changed START
+			if (!isEqual(initVal, prop.tempInitVal)) {
+				if (suppressEvents == false) storage.callEventListeners.call(formElm, 'onPropertyInitValChange', prop.elements, prop.name, prop.tempInitVal, initVal, e || null);
+				prop.tempInitVal = initVal;
+			}
+			if (!isEqual(val, prop.tempVal)) {
+				if (suppressEvents == false) storage.callEventListeners.call(formElm, 'onPropertyValChange', prop.elements, prop.name, prop.tempVal, val, e || null);
+				prop.tempVal = val;
+			}
+			// this triggers whenever a property changed END
 
- 		// this triggers only when changed state of a property changed START
-		if (isEqual(initVal, val) && prop.modified == true) {
-			storage.callEventListeners.call(formElm, 'onPropertyModifiedStateChange', prop.elements, prop.name, initVal, val, false, e || null);
-			prop.modified = false;
-		}
-		else if (!isEqual(initVal, val) && prop.modified == false) {
-			storage.callEventListeners.call(formElm, 'onPropertyModifiedStateChange', prop.elements, prop.name, initVal, val, true, e || null);
-			prop.modified = true;
-		}
-		// this triggers only when changed state of a property changed END
+			// this triggers only when changed state of a property changed START
+			if (isEqual(initVal, val) && prop.modified == true) {
+				storage.callEventListeners.call(formElm, 'onPropertyModifiedStateChange', prop.elements, prop.name, initVal, val, false, e || null);
+				prop.modified = false;
+			}
+			else if (!isEqual(initVal, val) && prop.modified == false) {
+				storage.callEventListeners.call(formElm, 'onPropertyModifiedStateChange', prop.elements, prop.name, initVal, val, true, e || null);
+				prop.modified = true;
+			}
+			// this triggers only when changed state of a property changed END
 
-		// this triggers only when changed state of the form changed START
-		var computedFormChangeState = methods.formModified.call($formElm);
-		if (!storage.formModified && computedFormChangeState) { storage.callEventListeners.call(formElm, 'onFormModifiedStateChange', true, e || null); }
-		else if (storage.formModified && !computedFormChangeState) { storage.callEventListeners.call(formElm, 'onFormModifiedStateChange', false, e || null); }
-		storage.formModified = computedFormChangeState;
-		// this triggers only when changed state of the form changed END
+			// this triggers only when changed state of the form changed START
+			var computedFormChangeState = methods.formModified.call($formElm);
+			if (!storage.formModified && computedFormChangeState) {
+				storage.callEventListeners.call(formElm, 'onFormModifiedStateChange', true, e || null);
+			}
+			else if (storage.formModified && !computedFormChangeState) {
+				storage.callEventListeners.call(formElm, 'onFormModifiedStateChange', false, e || null);
+			}
+			storage.formModified = computedFormChangeState;
+			// this triggers only when changed state of the form changed END
 
- 		// this triggers only when valid state of a property changed START
-		var currentValidState = true;
-		if (toClass.call(prop.tempValObj) == '[object Object]' && prop.tempValObj !== null && typeof prop.tempValObj.valid === 'boolean') {
-			currentValidState = prop.tempValObj.valid;
+			// this triggers only when valid state of a property changed START
+			var currentValidState = !((toClass.call(prop.tempValObj) == '[object Object]' && prop.tempValObj !== null) && typeof prop.tempValObj.valid !== 'undefined' && prop.tempValObj.valid == false);
+			if (currentValidState != prop.tempValid) {
+				storage.callEventListeners.call(formElm, 'onPropertyValidStateChange', prop.elements, prop.name, currentValidState, prop.tempValObj || null);
+				prop.tempValid = currentValidState;
+			}
+			// this triggers only when valid state of a property changed END
+
+			// this triggers only when valid state of the form changed START
+			var computedFormValidState = methods.formValid.call($formElm);
+			if (!storage.formValid && computedFormValidState) {
+				storage.callEventListeners.call(formElm, 'onFormValidStateChange', true, e || null);
+			}
+			else if (storage.formValid && !computedFormValidState) {
+				storage.callEventListeners.call(formElm, 'onFormValidStateChange', false, e || null);
+			}
+			// this triggers only when valid state of the form changed END
+			storage.formValid = computedFormValidState;
 		}
 		else {
-			if (initialValue) {
-				currentValidState = true;
-			}
-			else {
-				currentValidState = prop.tempValid;
-			}
+			log('warning', 'The property associate with the formfield with name ' + e.target + ' is not registered in uicForm3. Maybe it was inserted into the DOM after initializing uicForm3. Please call „update“ method after DOM changes.');
 		}
-		if (currentValidState != prop.tempValid) {
-			storage.callEventListeners.call(formElm, 'onPropertyValidStateChange', prop.elements, prop.name, currentValidState, prop.tempValObj || null);
-			prop.tempValid = currentValidState;
-		}
- 		// this triggers only when valid state of a property changed END
-
-		// this triggers only when valid state of the form changed START
-		var computedFormValidState = methods.formValid.call($formElm);
-		if (!storage.formValid && computedFormValidState) { storage.callEventListeners.call(formElm, 'onFormValidStateChange', true, e || null); }
-		else if (storage.formValid && !computedFormValidState) { storage.callEventListeners.call(formElm, 'onFormValidStateChange', false, e || null); }
-		storage.formValid = computedFormValidState;
-		// this triggers only when valid state of the form changed END
 	}
 	function updateProperties() {
 		var formElm = this;
 		var $formElm = $(formElm);
 		var settings = $formElm.data(identifier).settings;
 		var storage = $formElm.data(identifier).storage;
+		storage.properties = [];
 
 		var ignoredElements = settings.ignoredElements.join(',');
 
@@ -651,7 +681,7 @@
 		var $fixedElements = $(settings.fixedElements.join(','));
 
 		// add Properties to storage.properties START
-		$elms.each(function(){
+		$elms.each(function() {
 			if (this.name && this.name != '') {
 				if (!storage.properties[this.name]) {
 					storage.properties[this.name] = {
@@ -663,42 +693,54 @@
 		});
 
 		$elms = $(formElmArr).not(ignoredElements); // this are all form's elements that are to be updated
+
+//		this makes sure that if no option is implicitly selected the first one is defaultselected as it is also selected by default
+		$elms.filter(function() { return this.type.toLowerCase() == 'select-one' }).each(function() {
+			if (this.selectedIndex != -1) { this.options[this.selectedIndex].defaultSelected = true; };
+		});
+
 		for (var property in storage.properties) {
-			var prop = storage.properties[property];
-			$elms.filter(function(){return this.name == prop.name}).each(function(){
-				if (this.name && this.name != '') {
-					prop.elements.push(this);
-				}
-			});
-			if (prop.elements.length > 0) {
-				prop.fixedElements = $fixedElements.filter(function(){return this.name == prop.name}).toArray();
-				$(prop.fixedElements).attr('readonly','readonly');
-				prop.$elms = $(prop.elements);
-				prop.$radioButtons = prop.$elms.filter(function(){return this.type.toLowerCase() == 'radio'});
-				prop.$checkBoxes = prop.$elms.filter(function(){return this.type.toLowerCase() == 'checkbox'});
-				prop.$selectOnes = prop.$elms.filter(function(){return this.type.toLowerCase() == 'select-one'});
-				prop.$selectMultiples = prop.$elms.filter(function(){return this.type.toLowerCase() == 'select-multiple'});
-				prop.$others = prop.$elms.not(prop.$radioButtons).not(prop.$checkBoxes).not(prop.$selectOnes).not(prop.$selectMultiples);
-				prop.length = prop.elements.length;
-				prop.expectedValType = (((prop.length == 1 && prop.$selectMultiples.length == 0 ) || prop.length == prop.$radioButtons.length) && prop.name.lastIndexOf('[]') == -1) ? 'primitive' : 'complex';
-				var initVal = methods.initVal.call($formElm, prop.name);
-				var val = methods.val.call($formElm, prop.name);
-				if (isEqual(initVal, val)) {
-					prop.modified = false;
+			if (storage.properties.hasOwnProperty(property)) {
+				var prop = storage.properties[property];
+				$elms.filter(function() { return this.name == prop.name }).each(function() {
+					if (this.name && this.name != '') {
+						prop.elements.push(this);
+					}
+				});
+				if (prop.elements.length > 0) {
+					prop.fixedElements = $fixedElements.filter(function() { return this.name == prop.name }).toArray();
+					$(prop.fixedElements).attr('readonly','readonly');
+					prop.$elms = $(prop.elements);
+					prop.$radioButtons = prop.$elms.filter(function() { return this.type.toLowerCase() == 'radio' });
+					prop.$checkBoxes = prop.$elms.filter(function() { return this.type.toLowerCase() == 'checkbox' });
+					prop.$selectOnes = prop.$elms.filter(function() { return this.type.toLowerCase() == 'select-one' });
+					prop.$selectMultiples = prop.$elms.filter(function() { return this.type.toLowerCase() == 'select-multiple' });
+					prop.$others = prop.$elms.not(prop.$radioButtons).not(prop.$checkBoxes).not(prop.$selectOnes).not(prop.$selectMultiples);
+					prop.length = prop.elements.length;
+					prop.expectedValType = (((prop.length == 1 && prop.$selectMultiples.length == 0 ) || prop.length == prop.$radioButtons.length) && prop.name.lastIndexOf('[]') == -1) ? 'primitive' : 'complex';
+					var initVal = methods.initVal.call($formElm, prop.name);
+					var val = methods.val.call($formElm, prop.name);
+					if (isEqual(initVal, val)) {
+						prop.modified = false;
+					}
+					else {
+						prop.modified = true;
+					}
+					if (typeof prop.valid === 'undefined') {
+						prop.tempValid = true;
+					}
+					if (typeof prop.tempValObj === 'undefined') {
+						prop.tempValObj = null;
+					}
+					prop.tempInitVal = initVal;
+					prop.tempVal = val;
 				}
 				else {
-					prop.modified = true;
+					delete storage.properties[property];
 				}
-				if (typeof prop.valid === 'undefined') { prop.tempValid = true; }
-				if (typeof prop.tempValObj === 'undefined') { prop.tempValObj = null; }
-				prop.tempInitVal = initVal;
-				prop.tempVal = val;
-			}
-			else {
-				delete storage.properties[property];
 			}
 		}
-// 		if (storage.initiated) storage.callEventListeners.call(formElm, 'onResetFields', storage.properties);
+//		if (storage.initiated) storage.callEventListeners.call(formElm, 'onResetFields', storage.properties);
 	}
 	function setValue(initialValue, obj) {
 		try {
@@ -714,6 +756,7 @@
 			var args = []; $.extend(true, args, obj);
 			var key = args[0];
 			var value = args[1];
+			var suppressEvents = (args[2]) ? args[2] : false;
 			var val = null;
 
 			var prop = storage.properties[key];
@@ -734,7 +777,7 @@
 					val = value.value;
 				}
 				prop.tempValObj = value;
-// 				settings.onPropertyValidStateChange.call(formElm, prop.elements, prop.name, valObj.valid);
+//				settings.onPropertyValidStateChange.call(formElm, prop.elements, prop.name, valObj.valid);
 			}
 			else {
 				val = value;
@@ -742,12 +785,12 @@
 			}
 
 			if (prop.expectedValType == 'primitive' && typeof val == 'object') throw TypeError('Expected primitive data type for property "' + key +'", complex data type (' + toClass.call(val) + ') given.');
-			if (prop.expectedValType == 'complex' &&  typeof val != 'object') throw TypeError('Expected complex data type for property "' + key +'", primitive data type (' + toClass.call(val) + ') given.');
+			if (prop.expectedValType == 'complex' && typeof val != 'object') throw TypeError('Expected complex data type for property "' + key +'", primitive data type (' + toClass.call(val) + ') given.');
 
 			if (prop.expectedValType == 'primitive') {
 				var tempVal = val;
 				var assigned = false;
-				prop.$radioButtons.not(prop.fixedElements).each(function(){
+				prop.$radioButtons.not(prop.fixedElements).each(function() {
 					if (this.value == tempVal) {
 						if (initialValue) this['defaultChecked'] = true;
 						if (initialValue || !(this.readOnly || this.disabled)) this['checked'] = true;
@@ -759,8 +802,8 @@
 					}
 				});
 
-				prop.$checkBoxes.not(prop.fixedElements).each(function(){
-					if (this.value == tempVal || ($.inArray(this.value, ['1', 'true', 'on']) > -1 && $.inArray(tempVal, [1, '1',  true, 'on']) > -1)) {
+				prop.$checkBoxes.not(prop.fixedElements).each(function() {
+					if (this.value == tempVal || ($.inArray(this.value, ['1', 'true', 'on']) > -1 && $.inArray(tempVal, [1, '1', true, 'on']) > -1)) {
 						if (initialValue) this['defaultChecked'] = true;
 						if (initialValue || !(this.readOnly || this.disabled)) this['checked'] = true;
 						assigned = true;
@@ -771,7 +814,7 @@
 					}
 				});
 
-				prop.$selectOnes.not(prop.fixedElements).each(function(){
+				prop.$selectOnes.not(prop.fixedElements).each(function() {
 					for (var j = 0; j < this.options.length; j++) {
 						if (this.options[j].value == tempVal) {
 							if (initialValue) this.options[j]['defaultSelected'] = true;
@@ -808,21 +851,24 @@
 					this.style.visibility = 'visible';
 					this.style.visibility = tempStyle;
 				});
-				prop.$others.not(prop.fixedElements).each(function(){
-					if (initialValue) this['defaultValue'] = tempVal;
-					if (initialValue || !(this.readOnly || this.disabled)) this['value'] = tempVal;
+				prop.$others.not(prop.fixedElements).each(function() {
+					var transformedTempVal = (prop.format) ? prop.format.call(prop, tempVal) : tempVal;
+					if (initialValue) this['defaultValue'] = transformedTempVal;
+					if (initialValue || !(this.readOnly || this.disabled)) this['value'] = transformedTempVal;
 					assigned = true;
 				});
-				
-// 				if (tempVal == '') assigned = true;
+
+//				if (tempVal == '') assigned = true;
 			}
-			else if (prop.expectedValType == 'complex'){
+			else if (prop.expectedValType == 'complex') {
 				var tempVal = val.slice(0); // tempVal will hold all remaining array values after assigning these values, best case would be an empty array after assignment
-				for (var i in tempVal) {tempVal[i] = tempVal[i].toString()} // convert the contents of tempVal-Array to string to be able to compare with values from DOM-Objects
+				var transformedTempVal = val.slice(0); // tempVal will hold all remaining array values after assigning these values, best case would be an empty array after assignment
+				for (var i in tempVal) { tempVal[i] = tempVal[i].toString()} // convert the contents of tempVal-Array to string to be able to compare with values from DOM-Objects
+				for (var i in transformedTempVal) { tempVal[i] = (prop.format) ? prop.format.call(prop, tempVal[i].toString()) : tempVal[i].toString()} // convert the contents of tempVal-Array to string to be able to compare with values from DOM-Objects
 				var assignedValues = [];
 				var assigned = false;
 				var radioAssigned = 0;
-				prop.$radioButtons.not(prop.fixedElements).each(function(){
+				prop.$radioButtons.not(prop.fixedElements).each(function() {
 					var idx = $.inArray(this.value, tempVal);
 					if (idx > -1 && radioAssigned == 0) {
 						if (initialValue) this['defaultChecked'] = true;
@@ -838,7 +884,7 @@
 				});
 				if (radioAssigned > 1) log('warn', 'Too many values were provided for radioButton-Collection "' + prop.name + '"')
 
-				prop.$checkBoxes.not(prop.fixedElements).each(function(){
+				prop.$checkBoxes.not(prop.fixedElements).each(function() {
 					var idx = $.inArray(this.value, tempVal);
 					if (idx > -1) {
 						if (initialValue) this['defaultChecked'] = true;
@@ -852,9 +898,9 @@
 					}
 				});
 
-				prop.$selectOnes.not(prop.fixedElements).each(function(){
+				prop.$selectOnes.not(prop.fixedElements).each(function() {
 					var optionAssigned = 0;
-					$(this).find('option').each(function(){
+					$(this).find('option').each(function() {
 						var idx = $.inArray(this.value, tempVal);
 						if (idx > -1 && optionAssigned == 0) {
 							if (initialValue) this['defaultSelected'] = true;
@@ -870,7 +916,7 @@
 					});
 
 					if ($(this).find('option').length > 0 && optionAssigned == 0) {
-						$(this).find('option').each(function(idx){
+						$(this).find('option').each(function(idx) {
 							if (initialValue) this['defaultSelected'] = (idx == 0) ? true : false; // this sets the first radiobox = checked, if no radio box would be checked because this is the default behavior as recommended by the w3c
 							if (initialValue || !(this.readOnly || this.disabled)) this['selected'] = (idx == 0) ? true : false; // this sets the first radiobox = checked, if no radio box would be checked because this is the default behavior as recommended by the w3c
 						});
@@ -883,8 +929,8 @@
 					this.style.visibility = tempStyle;
 				});
 
-				prop.$selectMultiples.not(prop.fixedElements).each(function(){
-					$(this).find('option').each(function(){
+				prop.$selectMultiples.not(prop.fixedElements).each(function() {
+					$(this).find('option').each(function() {
 						var idx = $.inArray(this.value, tempVal);
 						if (idx > -1) {
 							if (initialValue) this['defaultSelected'] = true;
@@ -903,10 +949,10 @@
 					this.style.visibility = tempStyle;
 				});
 
-				prop.$others.not(prop.fixedElements).each(function(idx){
+				prop.$others.not(prop.fixedElements).each(function(idx) {
 					if (tempVal.length > 0) {
-						if (initialValue) this['defaultValue'] = tempVal[0];
-						if (initialValue || !(this.readOnly || this.disabled)) this['value'] = tempVal[0];
+						if (initialValue) this['defaultValue'] = transformedTempVal[0];
+						if (initialValue || !(this.readOnly || this.disabled)) this['value'] = transformedTempVal[0];
 						assignedValues = assignedValues.concat(tempVal.splice(0, 1));
 						assigned = true;
 					}
@@ -916,13 +962,13 @@
 					}
 				});
 				if (tempVal.length > 0) log('warn', 'Some values (' + tempVal + ') of value collection for property "' + key +'" could not be assigned.');
-				
-				for (var i in assignedValues) {assignedValues[i] = convertType(assignedValues[i])} // reconvert all ArrayContents to appropriate data-types to compare with former values
+
+				for (var i in assignedValues) { assignedValues[i] = convertType(assignedValues[i])} // reconvert all ArrayContents to appropriate data-types to compare with former values
 
 				if (val.length == 0) assigned = true;
 			}
-			handleValueChanges.call(formElm, prop, null, initialValue);
-			if (assigned == false) throw ReferenceError('Value (' + val + ') for  property "' + key +'" could not be assigned.');
+			handleValueChanges.call(formElm, prop, null, suppressEvents);
+			if (assigned == false) throw ReferenceError('Value (' + val + ') for property "' + key +'" could not be assigned.');
 		}
 		catch(e) { log('error', e.name + " : " + e.message) }
 	}
@@ -950,10 +996,10 @@
 
 			var vArr = [];
 
-			prop.$radioButtons.each(function(){
+			prop.$radioButtons.each(function() {
 				if (!this.disabled && this[_ckd]) { vArr.push(convertType(this.value)); }
 			});
-			prop.$checkBoxes.each(function(){
+			prop.$checkBoxes.each(function() {
 				var attr = $(this).attr('data-off-value');
 				if (prop.length == 1 && typeof attr !== typeof undefined && attr !== false) {
 					if (!this.disabled && this[_ckd]) {
@@ -967,22 +1013,23 @@
 					if (!this.disabled && this[_ckd]) { vArr.push(convertType(this.value)); }
 				}
 			});
-			prop.$selectOnes.each(function(){
+			prop.$selectOnes.each(function() {
 				if ((!this.disabled || initialValue)) {
 					for (var j = 0; j < this.options.length; j++) {
 						if (!this.disabled && this.options[j][_sel]) { vArr.push(convertType(this.options[j].value)); }
 					}
 				}
 			});
-			prop.$selectMultiples.each(function(){
+			prop.$selectMultiples.each(function() {
 				if ((!this.disabled || initialValue)) {
 					for (var j = 0; j < this.options.length; j++) {
 						if (!this.disabled && this.options[j][_sel]) { vArr.push(convertType(this.options[j].value)); }
 					}
 				}
 			});
-			prop.$others.each(function(){
-				if (!this.disabled && this[_val] != '') { vArr.push(convertType(this[_val])); }
+			prop.$others.each(function() {
+				var val = (prop.unFormat) ? prop.unFormat.call(this, this[_val]) : this[_val];
+				if (!this.disabled && this[_val] != '') { vArr.push(convertType(val)); }
 			});
 
 			var retVal = null;
@@ -1004,8 +1051,10 @@
 	}
 	function getDataValue(data, elemName) {
 		var arrSegments = elemName.split(/\]\[\]|\[\]|\]\[|\[|\]/g);
-		if (arrSegments[arrSegments.length - 1] == '') arrSegments.pop();
-		function loop(data){
+		if (arrSegments[arrSegments.length - 1] == '') {
+			arrSegments.pop();
+		}
+		function loop(data) {
 			var name = arrSegments.shift();
 			if (arrSegments.length > 0) {
 				if (typeof data[name] != 'undefined') {
@@ -1021,9 +1070,11 @@
 	}
 	function setDataValue(data, elemName, val) {
 		var arrSegments = elemName.split(/\]\[\]|\[\]|\]\[|\[|\]/g);
-		if (arrSegments[arrSegments.length - 1] == '') arrSegments.pop();
+		if (arrSegments[arrSegments.length - 1] == '') {
+			arrSegments.pop();
+		}
 		var counter = 0;
-		function loop(data){
+		function loop(data) {
 			var name = arrSegments[counter];
 			if (counter < arrSegments.length - 1) {
 				if (typeof data[name] == 'undefined') {
@@ -1092,3 +1143,4 @@
 $.fn.uicForm3.defaults = {};
 $.fn.uicForm3.log = [];
 $.fn.uicForm3.debugFilter = [];
+
