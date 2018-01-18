@@ -553,6 +553,13 @@
 		$elms.filter(function() { return this.type.toLowerCase() == 'select-one' }).each(function() {
 			if (this.selectedIndex != -1) { this.options[this.selectedIndex].defaultSelected = true; };
 		});
+		/**
+		 * This sets the defaultValue of an input[type='range'] to 50 if it is initially not set.
+		 * This is the value the gui displays and that defaults to the value property
+		 */
+		$elms.filter(function() { return this.type.toLowerCase() == 'range' }).each(function() {
+			if (this.defaultValue === '') { this.defaultValue = 50 };
+		});
 	}
 	function registerEvents() {
 		var formElm = this;
@@ -577,21 +584,21 @@
 //				doKeyDown.call(formElm, storage.properties[e.currentTarget.name], e);
 //			}
 //		});
-		$formElm.on('DOMSubtreeModified propertychange', function(e) {
-			// DOMSubtreeModified for w3c compliant browsers
-			// propertychange for ie < 9
-			// seems to be buggy in some engines
-			// webkit:
-				// when changing initialValues programatically fires on every changed option, textarea, input[type=radio], input[type=checkbox]
-				// when changing values programatically fires 25 x on input[type=date]
-			// methods.update.call($formElm);
-		});
-		$formElm.on('DOMNodeInserted', function(e) {
-			// log('debug', 'subTree inserted', e);
-		});
-		$formElm.on('DOMNodeRemoved', function(e) {
-			// log('debug', 'subTree removed', e);
-		});
+// 		$formElm.on('DOMSubtreeModified propertychange', function(e) {
+// 			// DOMSubtreeModified for w3c compliant browsers
+// 			// propertychange for ie < 9
+// 			// seems to be buggy in some engines
+// 			// webkit:
+// 				// when changing initialValues programatically fires on every changed option, textarea, input[type=radio], input[type=checkbox]
+// 				// when changing values programatically fires 25 x on input[type=date]
+// 			// methods.update.call($formElm);
+// 		});
+// 		$formElm.on('DOMNodeInserted', function(e) {
+// 			// log('debug', 'subTree inserted', e);
+// 		});
+// 		$formElm.on('DOMNodeRemoved', function(e) {
+// 			// log('debug', 'subTree removed', e);
+// 		});
 	}
 	function handleValueChanges(prop, e, suppressEvents) {
 		if (prop) {
@@ -724,6 +731,14 @@
 						prop.modified = false;
 					}
 					else {
+						/**
+						 * if input[type='range'] gets no initial value it's defaultValue is empty but it's value is 50
+						 * so property modified is true but no onPropertyModifiedStateChange() is fired
+						 * we need either fire onPropertyModifiedStateChange() in this place or default range value to 50
+						 * if no default value is set. Second option is equivalent to select-ones if no option is selected
+						 * This is fixed in initElements()
+						 */
+						
 						prop.modified = true;
 					}
 					if (typeof prop.valid === 'undefined') {
