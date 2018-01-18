@@ -724,7 +724,33 @@
 					prop.$selectMultiples = prop.$elms.filter(function() { return this.type.toLowerCase() == 'select-multiple' });
 					prop.$others = prop.$elms.not(prop.$radioButtons).not(prop.$checkBoxes).not(prop.$selectOnes).not(prop.$selectMultiples);
 					prop.length = prop.elements.length;
-					prop.expectedValType = (((prop.length == 1 && prop.$selectMultiples.length == 0 ) || prop.length == prop.$radioButtons.length) && prop.name.lastIndexOf('[]') == -1) ? 'primitive' : 'complex';
+					prop.expectedValType = (
+						(
+							(
+								prop.length == 1
+								&&
+								prop.$selectMultiples.length == 0
+							)
+							||
+							(
+								/*
+								 * This adds support for Zend\Form-Checkboxes which are backed by a hidden field by default
+								 * to always return a value even if not checked what makes clients to omit the field
+								 * when sending the request to the server. This behavior can be changed within the element's
+								 * configuration in Zend\Form.
+								 */
+								prop.length == 2
+								&&
+								prop.$elms[0].type.toLowerCase() === 'hidden'
+								&&
+								prop.$elms[1].type.toLowerCase() === 'checkbox'
+							)
+							||
+							prop.length == prop.$radioButtons.length
+						)
+						&&
+						prop.name.lastIndexOf('[]') == -1
+					) ? 'primitive' : 'complex';
 					var initVal = methods.initVal.call($formElm, prop.name);
 					var val = methods.val.call($formElm, prop.name);
 					if (isEqual(initVal, val)) {
