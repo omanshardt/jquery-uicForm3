@@ -1,7 +1,5 @@
-// Version 1.10.0 06.01.2018
-// This is the successor of Version 1.0.5
-// It incorporates most developments that was made since 22.02.2015 within various copies and versions from 1.0.5 to 1.9.2
-// added hasOwnProperty query in many places
+// Version 1.10.5 25.01.2018
+// replaced uicForm class name by uicForm3
 
 (function($, window, undefined) {
 	var identifier = "uic_form3";
@@ -465,7 +463,7 @@
 			return this.each(function() {
 				var formElm = this;
 				var $formElm = $(formElm);
-				$formElm.addClass('uicForm');
+				$formElm.addClass('uicForm3');
 				var data = $formElm.data(identifier);
 				if (!data) {
 					$formElm.data(identifier,{});
@@ -559,6 +557,14 @@
 		 */
 		$elms.filter(function() { return this.type.toLowerCase() == 'range' }).each(function() {
 			if (this.defaultValue === '') { this.defaultValue = 50 };
+		});
+
+		/**
+		 * This sets the defaultValue of an input[type='color'] to #000000 if it is initially not set.
+		 * This is the value the gui displays and that defaults to the value property
+		 */
+		$elms.filter(function() { return this.type.toLowerCase() == 'color' }).each(function() {
+			if (this.defaultValue === '') { this.defaultValue = '#000000' };
 		});
 	}
 	function registerEvents() {
@@ -815,7 +821,12 @@
 					}
 				}
 				else {
-					val = value.value;
+					/*
+					 * empty radios, checkboxes and select-multiple are not sent from the browser
+					 * They were returned from Zend-Validation as properties with a null-value. We therefore give them
+					 * an empty string ('for primitive types') or an empty array (for complex types)
+					 */
+					val = (value.value !== null) ? value.value : (prop.expectedValType == 'primitive') ? "" : [];
 				}
 				prop.tempValObj = value;
 //				settings.onPropertyValidStateChange.call(formElm, prop.elements, prop.name, valObj.valid);
@@ -1184,4 +1195,3 @@
 $.fn.uicForm3.defaults = {};
 $.fn.uicForm3.log = [];
 $.fn.uicForm3.debugFilter = [];
-
