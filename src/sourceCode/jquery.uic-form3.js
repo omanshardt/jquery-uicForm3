@@ -1,5 +1,4 @@
-// Version 1.10.5 25.01.2018
-// replaced uicForm class name by uicForm3
+// Version 1.11.0 16.11.2019
 
 (function($, window, undefined) {
 	var identifier = "uic_form3";
@@ -461,67 +460,73 @@
 			}
 			var settings = $.extend(true, {}, internalDefaults, $.fn.uicForm3.defaults, options);
 			return this.each(function() {
-				var formElm = this;
-				var $formElm = $(formElm);
-				$formElm.addClass('uicForm3');
-				var data = $formElm.data(identifier);
-				if (!data) {
-					$formElm.data(identifier,{});
-					$formElm.data(identifier).settings = settings;
-					var storage = $formElm.data(identifier).storage = {
-						initiated: false,
-						formModified: false,
-						formValid: true,
-						properties: [],
-						callEventListeners: function(event) {
-							var retVal = true;
-							if (event.indexOf('onProperty') > -1) {
-								if ($.fn.uicForm3.debugFilter.length == 0) {
-									if ($.inArray(_const.log.DEBUG, $.fn.uicForm3.log) > -1) log('debug', event + ': ', Array.prototype.slice.call(arguments, 1));
-								}
-								else {
-									if ($.inArray(arguments[2], $.fn.uicForm3.debugFilter) > -1) {
+				try {
+					if (this.tagName.toLowerCase() !== 'form') {
+						throw TypeError('The node associated with the given selector is not of type "HTMLFormElement".');
+					}
+					var formElm = this;
+					var $formElm = $(formElm);
+					$formElm.addClass('uicForm3');
+					var data = $formElm.data(identifier);
+					if (!data) {
+						$formElm.data(identifier,{});
+						$formElm.data(identifier).settings = settings;
+						var storage = $formElm.data(identifier).storage = {
+							initiated: false,
+							formModified: false,
+							formValid: true,
+							properties: [],
+							callEventListeners: function(event) {
+								var retVal = true;
+								if (event.indexOf('onProperty') > -1) {
+									if ($.fn.uicForm3.debugFilter.length == 0) {
 										if ($.inArray(_const.log.DEBUG, $.fn.uicForm3.log) > -1) log('debug', event + ': ', Array.prototype.slice.call(arguments, 1));
 									}
+									else {
+										if ($.inArray(arguments[2], $.fn.uicForm3.debugFilter) > -1) {
+											if ($.inArray(_const.log.DEBUG, $.fn.uicForm3.log) > -1) log('debug', event + ': ', Array.prototype.slice.call(arguments, 1));
+										}
+									}
 								}
+								else {
+									if ($.inArray(_const.log.DEBUG, $.fn.uicForm3.log) > -1) log('debug', event + ': ', Array.prototype.slice.call(arguments, 1));
+								}
+								for (var i=0; i < storage.listeners[event].length; i++) {
+									var r = storage.listeners[event][i].apply(this, Array.prototype.slice.call(arguments, 1));
+									if (r === false) { retVal = false }
+								}
+								return retVal;
+							},
+							listeners: {
 							}
-							else {
-								if ($.inArray(_const.log.DEBUG, $.fn.uicForm3.log) > -1) log('debug', event + ': ', Array.prototype.slice.call(arguments, 1));
+						};
+						// create object with properties for every event as defined in internalDefaults
+						for (var i in internalDefaults) {
+							if (i.indexOf('on') == 0 && toClass.call(internalDefaults[i]) == '[object Function]') {
+								storage.listeners[i] = [];
 							}
-							for (var i=0; i < storage.listeners[event].length; i++) {
-								var r = storage.listeners[event][i].apply(this, Array.prototype.slice.call(arguments, 1));
-								if (r === false) { retVal = false }
+						}
+						// apply eventListeners from defaults
+						for (var i in $.fn.uicForm3.defaults) {
+							if (i.indexOf('on') == 0 && toClass.call($.fn.uicForm3.defaults[i]) == '[object Function]') {
+								if (storage.listeners[i]) storage.listeners[i].push($.fn.uicForm3.defaults[i]);
 							}
-							return retVal;
-						},
-						listeners: {
 						}
-					};
-					// create object with properties for every event as defined in internalDefaults
-					for (var i in internalDefaults) {
-						if (i.indexOf('on') == 0 && toClass.call(internalDefaults[i]) == '[object Function]') {
-							storage.listeners[i] = [];
+						// apply eventListeners from options
+						for (var i in options) {
+							if (i.indexOf('on') == 0 && toClass.call(options[i]) == '[object Function]') {
+								if (storage.listeners[i]) storage.listeners[i].push(options[i]);
+							}
 						}
+						initElements.call(formElm);
+						registerEvents.call(formElm);
+						updateProperties.call(formElm);
+						storage.initiated = true;
+						storage.formModified = methods.formModified.call($formElm);
+						storage.callEventListeners.call(formElm, 'onFormInit', storage.properties, storage.formModified);
 					}
-					// apply eventListeners from defaults
-					for (var i in $.fn.uicForm3.defaults) {
-						if (i.indexOf('on') == 0 && toClass.call($.fn.uicForm3.defaults[i]) == '[object Function]') {
-							if (storage.listeners[i]) storage.listeners[i].push($.fn.uicForm3.defaults[i]);
-						}
-					}
-					// apply eventListeners from options
-					for (var i in options) {
-						if (i.indexOf('on') == 0 && toClass.call(options[i]) == '[object Function]') {
-							if (storage.listeners[i]) storage.listeners[i].push(options[i]);
-						}
-					}
-					initElements.call(formElm);
-					registerEvents.call(formElm);
-					updateProperties.call(formElm);
-					storage.initiated = true;
-					storage.formModified = methods.formModified.call($formElm);
-					storage.callEventListeners.call(formElm, 'onFormInit', storage.properties, storage.formModified);
 				}
+				catch(e) { log('error', e.name + " : " + e.message) }
 			});
 		}
 	};
@@ -1030,6 +1035,7 @@
 			var $formElm = $(formElm);
 			var settings = $formElm.data(identifier).settings;
 			var storage = $formElm.data(identifier).storage;
+			var retVal = null;
 
 			initialValue = initialValue || false;
 
@@ -1042,7 +1048,14 @@
 			var key = args[0];
 
 			var prop = storage.properties[key];
-			if (!prop) throw ReferenceError('No form elements are assigned to property "' + key + '".');
+			if (!prop) {
+				var data =  methods.data.call($formElm);
+				retVal = getDataValue(data, key);
+				if (!retVal) {
+					throw ReferenceError('No form elements are assigned to property "' + key + '".');
+				}
+				return retVal;
+			}
 
 			//
 
@@ -1084,7 +1097,6 @@
 				if (!this.disabled && this[_val] != '') { vArr.push(convertType(val)); }
 			});
 
-			var retVal = null;
 			if (prop.expectedValType == 'primitive') {
 				retVal = (vArr.length == 1) ? vArr[0] : vArr.join(','); // can vArr.length be greater than 1?
 				if (retVal == '' && typeof prop.emptyValue != 'undefined') {
@@ -1102,7 +1114,7 @@
 		catch(e) { log('error', e.name + " : " + e.message) }
 	}
 	function getDataValue(data, elemName) {
-		var arrSegments = elemName.split(/\]\[\]|\[\]|\]\[|\[|\]/g);
+		var arrSegments = elemName.split(/[\[\]'".]+/g);
 		if (arrSegments[arrSegments.length - 1] == '') {
 			arrSegments.pop();
 		}
@@ -1121,7 +1133,7 @@
 		return res;
 	}
 	function setDataValue(data, elemName, val) {
-		var arrSegments = elemName.split(/\]\[\]|\[\]|\]\[|\[|\]/g);
+		var arrSegments = elemName.split(/[\[\]'".]+/g);
 		if (arrSegments[arrSegments.length - 1] == '') {
 			arrSegments.pop();
 		}
