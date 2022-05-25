@@ -27,7 +27,7 @@
   "author": "Ole Manshardt <ole.manshardt@megaflop.net> (http://uic.megaflop.net/)",
   "license": "MIT",
   "devDependencies": {
-    "grunt": "^0.4.5",
+    "grunt": "^1.5.3",
     "grunt-autoprefixer": "^1.0.1",
     "grunt-closure-tools": "^1.0.0",
     "grunt-contrib-clean": "^0.6.0",
